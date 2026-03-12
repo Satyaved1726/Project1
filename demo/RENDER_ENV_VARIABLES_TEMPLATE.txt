@@ -1,0 +1,163 @@
+# TRINETRA - Render Environment Variables
+# Copy these variables into your Render service dashboard
+# Settings > Environment > Add Environment Variables
+#
+# Replace placeholder values with your actual Supabase credentials
+# ============================================================
+
+# DATABASE CONNECTION - REQUIRED
+# ============================================================
+# Format: postgresql://username:password@host:port/database
+# Example: postgresql://postgres:myPassword123@db.hbnjxekpkomrezeiogxm.supabase.co:5432/postgres
+# Get this from Supabase Dashboard > Settings > Database > Connection String
+DATABASE_URL=postgresql://postgres:YOUR_SUPABASE_PASSWORD@db.hbnjxekpkomrezeiogxm.supabase.co:5432/postgres
+
+# Database credentials (used as fallback if DATABASE_URL not provided)
+DB_USERNAME=postgres
+DB_PASSWORD=YOUR_SUPABASE_PASSWORD
+DB_HOST=db.hbnjxekpkomrezeiogxm.supabase.co
+DB_PORT=5432
+DB_NAME=postgres
+DB_POOL_SIZE=5
+
+# ============================================================
+# JWT AUTHENTICATION - REQUIRED
+# ============================================================
+# Minimum 32 characters for production
+# Generate with: head -c 32 /dev/urandom | base64
+# Or use: https://www.random.org/strings/?num=1&len=32&digits=on&upperalpha=on&loweralpha=on&unique=on&format=html
+JWT_SECRET=your-production-jwt-secret-min-32-characters-change-this
+JWT_EXPIRATION=86400000
+
+# ============================================================
+# SERVER CONFIGURATION
+# ============================================================
+# Port for Render deployment (usually 8080)
+PORT=8080
+
+# ============================================================
+# CORS CONFIGURATION
+# ============================================================
+# Your frontend URLs (comma-separated)
+# Example: https://trinetra.com,https://app.trinetra.com,https://admin.trinetra.com
+CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com,https://your-app-domain.com
+
+# ============================================================
+# OPTIONAL: NOTIFICATION CONFIGURATION
+# ============================================================
+# For email notifications (if implemented)
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_USERNAME=your-email@gmail.com
+# SMTP_PASSWORD=your-app-password
+# SMTP_FROM=noreply@trinetra.com
+
+# ============================================================
+# OPTIONAL: EXTERNAL SERVICE INTEGRATIONS
+# ============================================================
+# For file storage (AWS S3, Google Cloud Storage, etc.)
+# STORAGE_BUCKET_NAME=trinetra-files
+# STORAGE_REGION=us-east-1
+# STORAGE_ACCESS_KEY=xxx
+# STORAGE_SECRET_KEY=xxx
+
+# ============================================================
+# LOGGING & MONITORING
+# ============================================================
+# Set log level if needed (default: INFO)
+# LOGGING_LEVEL_ROOT=INFO
+# LOGGING_LEVEL_COM_SAFEVOICE=DEBUG
+
+# ============================================================
+# INSTRUCTIONS FOR RENDER DASHBOARD
+# ============================================================
+# 1. Go to: https://dashboard.render.com
+# 2. Select your TRINETRA service
+# 3. Navigate to: Settings > Environment
+# 4. Click "Add Environment Variable"
+# 5. For each variable above:
+#    - Copy the key (left side of =)
+#    - Copy the value (right side of =)
+#    - Paste into Render form
+# 6. Click "Save" or "Deploy"
+# 7. Render will redeploy your service with new variables
+# 8. Check deployment logs for success
+
+# ============================================================
+# SECURITY NOTES
+# ============================================================
+# - Never commit actual passwords to Git
+# - Use strong, unique passwords for each environment
+# - Rotate JWT_SECRET every 6 months
+# - Rotate DB_PASSWORD every 90 days
+# - Monitor audit_logs table for suspicious activity
+# - Use different passwords for dev/staging/production
+# - Enable two-factor authentication on Supabase account
+
+# ============================================================
+# TESTING YOUR CONFIGURATION
+# ============================================================
+# After deploying, test connectivity:
+#
+# 1. Check application health:
+#    curl https://your-render-service.onrender.com/actuator/health
+#
+# 2. View logs in Render dashboard:
+#    Look for: "Created connection pool" and "Tomcat started"
+#
+# 3. Check database connectivity in Supabase:
+#    Run: SELECT COUNT(*) FROM users;
+#
+# 4. Test API endpoint:
+#    curl -X GET https://your-render-service.onrender.com/api/health
+#
+# 5. Monitor error logs for:
+#    - Connection pool exhaustion
+#    - SSL/TLS errors
+#    - Authentication failures
+
+# ============================================================
+# TROUBLESHOOTING
+# ============================================================
+#
+# "Connection refused" or "connect timed out":
+#   → Check DATABASE_URL format is correct
+#   → Verify Supabase IP whitelist
+#
+# "Invalid parameters: Database connection string":
+#   → Ensure format: postgresql://user:pass@host:port/db
+#   → Don't use JDBC format here (DataSourceConfiguration handles it)
+#   → Check for special characters in password (URL encode if needed)
+#
+# "User 'postgres' is reserved":
+#   → Supabase only allows 'postgres' user, cannot change
+#   → Create additional database users if needed in Supabase
+#
+# "SSL/TLS connection error":
+#   → DataSourceConfiguration automatically adds sslmode=require
+#   → If still fails, check Supabase SSL certificate validity
+#
+# "Connection pool rejected new connection":
+#   → Increase DB_POOL_SIZE in environment
+#   → Check Render service has enough memory
+#
+# "No more connections available in the pool":
+#   → Connection leak - check application logic
+#   → Monitor HikariCP metrics
+#   → Reduce connection timeout or idle timeout
+
+# ============================================================
+# PRODUCTION CHECKLIST
+# ============================================================
+# Before going to production:
+# [ ] All DATABASE_URL placeholders replaced with real values
+# [ ] JWT_SECRET changed to strong random value
+# [ ] CORS_ALLOWED_ORIGINS set to production domains only
+# [ ] Database password changed from default
+# [ ] SSL/TLS enabled on all connections
+# [ ] Render service auto-scaling configured
+# [ ] Monitoring and alerts set up
+# [ ] Backup strategy implemented in Supabase
+# [ ] Rate limiting configured (if needed)
+# [ ] WAF/DDoS protection enabled (if needed)
+
