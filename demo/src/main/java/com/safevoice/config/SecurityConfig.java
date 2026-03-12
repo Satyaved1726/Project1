@@ -15,8 +15,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.safevoice.security.CustomUserDetailsService;
 import com.safevoice.security.JwtAuthenticationFilter;
@@ -93,8 +91,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Enable CORS with default settings (uses CorsConfigurationSource)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // CORS is handled by GlobalCorsFilter at servlet level (runs BEFORE Spring Security)
+                // This ensures CORS headers are applied globally
                 
                 // Disable CSRF (not needed for stateless JWT authentication)
                 .csrf(csrf -> csrf.disable())
@@ -137,52 +135,5 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    /**
-     * CORS Configuration Source Bean
-     * 
-     * Provides CORS configuration for Spring Security using UrlBasedCorsConfigurationSource
-     * 
-     * Configuration:
-     * - Allowed Origins:
-     *   * https://projectfrontend17.vercel.app (Production Frontend)
-     *   * http://localhost:3000 (Local React dev)
-     *   * http://localhost:4200 (Local Angular dev)
-     * - Allowed Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
-     * - Allowed Headers: All (*)
-     * - Credentials: Allowed
-     * - Max Age: 3600 seconds
-     * 
-     * @return UrlBasedCorsConfigurationSource properly configured
-     */
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
-        
-        // Set allowed origins
-        configuration.setAllowedOrigins(java.util.Arrays.asList(
-                "https://projectfrontend17.vercel.app",
-                "http://localhost:3000",
-                "http://localhost:4200"
-        ));
-        
-        // Set allowed HTTP methods
-        configuration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        
-        // Allow all headers
-        configuration.setAllowedHeaders(java.util.Arrays.asList("*"));
-        
-        // Allow credentials (cookies, Authorization headers)
-        configuration.setAllowCredentials(true);
-        
-        // Set max age for preflight cache
-        configuration.setMaxAge(3600L);
-        
-        // Register configuration for all paths
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        
-        return source;
     }
 }

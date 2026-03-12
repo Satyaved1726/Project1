@@ -80,31 +80,42 @@ public class GlobalCorsFilter {
         protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
                 throws ServletException, IOException {
 
-            // Add CORS headers to response for all requests
             String origin = request.getHeader("Origin");
             
-            // Allow specific origins
-            if (origin != null && (
-                    origin.equals("https://projectfrontend17.vercel.app") ||
-                    origin.equals("http://localhost:3000") ||
-                    origin.equals("http://localhost:4200")
-            )) {
-                response.setHeader("Access-Control-Allow-Origin", origin);
+            // Always allow from these specific origins
+            String[] allowedOrigins = {
+                "https://projectfrontend17.vercel.app",
+                "http://localhost:3000",
+                "http://localhost:4200"
+            };
+            
+            boolean isAllowed = false;
+            if (origin != null) {
+                for (String allowed : allowedOrigins) {
+                    if (origin.equals(allowed)) {
+                        isAllowed = true;
+                        break;
+                    }
+                }
             }
             
-            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
-            response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-            response.setHeader("Access-Control-Allow-Credentials", "true");
-            response.setHeader("Access-Control-Max-Age", "3600");
-            response.setHeader("Access-Control-Expose-Headers", "Content-Type, Authorization");
-
-            // Handle preflight OPTIONS request - return immediately with 200 OK
+            // Set CORS headers if origin is allowed
+            if (isAllowed) {
+                response.setHeader("Access-Control-Allow-Origin", origin);
+                response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD");
+                response.setHeader("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization, X-Requested-With, Accept, X-CSRF-Token");
+                response.setHeader("Access-Control-Allow-Credentials", "true");
+                response.setHeader("Access-Control-Max-Age", "3600");
+                response.setHeader("Access-Control-Expose-Headers", "Content-Type, Authorization, X-Total-Count");
+            }
+            
+            // Handle preflight OPTIONS request
             if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-                response.setStatus(HttpServletResponse.SC_OK);
+                response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                 return;
             }
 
-            // Continue filter chain for non-OPTIONS requests
+            // Continue filter chain for other requests
             filterChain.doFilter(request, response);
         }
     }

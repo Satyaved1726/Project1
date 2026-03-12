@@ -1,15 +1,7 @@
 package com.safevoice.config;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 /**
  * Production-Grade CORS Configuration
@@ -31,60 +23,14 @@ public class CorsConfig {
     private String allowedOrigins;
 
     /**
-     * Global CORS Filter Bean
+     * CORS Filter is now handled by GlobalCorsFilter with explicit FilterRegistrationBean
+     * This old bean has been disabled to avoid filter conflicts
      * 
-     * Configures CORS for all endpoints matching path pattern /**
+     * GlobalCorsFilter ensures:
+     * - Filter runs BEFORE Spring Security (order = -100)
+     * - Proper origin validation
+     * - Correct header ordering
      * 
-     * Allowed Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
-     * Allowed Headers: All (*)
-     * Credentials: Allowed (for JWT tokens)
-     * Max Age: 3600 seconds (1 hour)
-     * 
-     * @return CorsFilter bean configured with production settings
+     * Note: This configuration class is kept for environment variable parsing only
      */
-    @Bean
-    public CorsFilter corsFilter() {
-        CorsConfiguration config = new CorsConfiguration();
-        
-        // Parse allowed origins from environment variable
-        // Each origin is trimmed to handle spaces in environment variables
-        List<String> origins = Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim)
-                .filter(origin -> !origin.isEmpty())
-                .collect(Collectors.toList());
-        
-        System.out.println("[CORS] Configured allowed origins: " + origins);
-        
-        // Set allowed origins
-        config.setAllowedOrigins(origins);
-        
-        // Set allowed HTTP methods
-        // OPTIONS is required for preflight requests
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
-        
-        // Allow all request headers
-        config.setAllowedHeaders(Arrays.asList("*"));
-        
-        // Expose headers that client needs to access
-        // Authorization header needed for JWT tokens
-        config.setExposedHeaders(Arrays.asList(
-                "Content-Type",
-                "Authorization",
-                "X-Requested-With",
-                "Accept",
-                "Origin"
-        ));
-        
-        // Allow credentials (cookies, authorization headers)
-        config.setAllowCredentials(true);
-        
-        // Cache preflight response for 1 hour
-        config.setMaxAge(3600L);
-        
-        // Apply CORS configuration to all endpoints
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        
-        return new CorsFilter(source);
-    }
 }
