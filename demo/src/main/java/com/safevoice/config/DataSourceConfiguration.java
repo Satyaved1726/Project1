@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 
 import javax.sql.DataSource;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -16,39 +17,24 @@ import com.zaxxer.hikari.HikariDataSource;
  * DataSource Configuration for Supabase PostgreSQL and Render deployment
  * Handles both DATABASE_URL format (postgresql://user:password@host:port/db)
  * and direct JDBC configuration
+ * 
+ * For local development without environment variables, Spring Boot's
+ * default DataSource autoconfiguration will be used from application.properties
  */
 @Configuration
 public class DataSourceConfiguration {
 
     @Bean
     @Primary
+    @ConditionalOnProperty(name = "DATABASE_URL", havingValue = "", matchIfMissing = false)
     public DataSource dataSource() throws URISyntaxException {
         String databaseUrl = System.getenv("DATABASE_URL");
         String dbUsername = System.getenv("DB_USERNAME");
         String dbPassword = System.getenv("DB_PASSWORD");
         String dbHost = System.getenv("DATABASE_HOST");
 
-        // RENDER DEPLOYMENT: DATABASE_URL must be set in Render environment
-        // Format: postgresql://postgres:PASSWORD@db.XXXXX.supabase.co:5432/postgres
-        if ((databaseUrl == null || databaseUrl.isEmpty()) && (dbHost == null || dbHost.isEmpty())) {
-            throw new IllegalStateException(
-                "\n========================================\n" +
-                "CRITICAL: Database configuration missing!\n" +
-                "========================================\n" +
-                "The DATABASE_URL environment variable is not set.\n\n" +
-                "For Render deployment:\n" +
-                "1. Go to Render Dashboard > Your Service > Settings > Environment\n" +
-                "2. Add environment variable:\n" +
-                "   DATABASE_URL = postgresql://postgres:PASSWORD@db.XXXXX.supabase.co:5432/postgres\n\n" +
-                "Replace:\n" +
-                "- PASSWORD with your Supabase database password\n" +
-                "- db.XXXXX.supabase.co with your Supabase host\n\n" +
-                "For local development:\n" +
-                "- Set DATABASE_URL in your .env file or system environment\n" +
-                "- Or set DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, DB_USERNAME, DB_PASSWORD\n" +
-                "========================================\n"
-            );
-        }
+        // This bean is only created when DATABASE_URL environment variable is explicitly set
+        // For production/deployment only
 
         HikariConfig config = new HikariConfig();
 
