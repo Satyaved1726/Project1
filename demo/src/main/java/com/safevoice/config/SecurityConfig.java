@@ -1,7 +1,5 @@
 package com.safevoice.config;
 
-import com.safevoice.security.JwtAuthenticationFilter;
-import com.safevoice.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +17,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.safevoice.security.CustomUserDetailsService;
+import com.safevoice.security.JwtAuthenticationFilter;
 
 /**
  * Production-Grade Security Configuration
@@ -105,6 +106,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         // Allow preflight OPTIONS requests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        
+                        // Public root endpoint
+                        .requestMatchers(HttpMethod.GET, "/").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/").permitAll()
                         
                         // Public endpoints - Authentication endpoints
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
