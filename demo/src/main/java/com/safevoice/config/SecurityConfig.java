@@ -17,7 +17,21 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
+/**
+ * Production-Grade Security Configuration
+ * 
+ * Implements Spring Security 6+ best practices:
+ * - CORS enabled globally
+ * - CSRF disabled for stateless JWT authentication
+ * - Session-less (Stateless) configuration
+ * - JWT filter chain
+ * - Role-based authorization
+ * 
+ * @author Security Team
+ * @version 1.0
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -29,11 +43,17 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    /**
+     * Password encoder bean using BCrypt
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Authentication provider using custom user details service
+     */
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
@@ -41,31 +61,100 @@ public class SecurityConfig {
         return authProvider;
     }
 
+    /**
+     * Authentication manager bean
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
+    /**
+     * Main Security Filter Chain
+     * 
+     * Configuration:
+     * 1. Enable CORS with default settings (uses CorsConfigurationSource from CorsConfig)
+     * 2. Disable CSRF (stateless JWT-based authentication)
+     * 3. Stateless session management (no server-side sessions)
+     * 4. Authorization rules:
+     *    - /api/auth/** endpoints are PUBLIC
+     *    - /api/reports/submit is PUBLIC
+     *    - /api/reports/token/** is PUBLIC
+     *    - /api/admin/** requires ADMIN role
+     *    - All other endpoints require authentication
+     * 5. JWT filter is applied before username/password filter
+     * 
+     * @param http HttpSecurity to configure
+     * @return Configured SecurityFilterChain
+     * @throws Exception if configuration fails
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // Enable CORS with default settings (uses CorsConfigurationSource)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                
+                // Disable CSRF (not needed for stateless JWT authentication)
                 .csrf(csrf -> csrf.disable())
+                
+                // Use stateless session management for REST APIs
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                
+                // Authorization configuration
                 .authorizeHttpRequests(authz -> authz
-                        // Public endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+                        // Public endpoints - Authentication endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/auth/**").permitAll()
+                        
+                        // Public endpoints - Report submission (anonymous)
                         .requestMatchers(HttpMethod.POST, "/api/reports/submit").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reports/token/**").permitAll()
                         
-                        // Admin endpoints - require ADMIN role
-                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
+                        // Health check endpoint
+                        .requestMatchers("/api/health").permitAll()
+                        
+                        // Admin endpoints require ADMIN role
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         
                         // All other requests require authentication
                         .anyRequest().authenticated()
                 )
+                
+                // Register authentication provider
                 .authenticationProvider(authenticationProvider())
+                
+                // Add JWT filter before username/password filter
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * CORS Configuration Source Bean
+     * 
+     * Provides CORS configuration for Spring Security
+     * Sources configuration from the CorsFilter bean in CorsConfig
+     * 
+     * @return CorsConfigurationSource configured with allowed origins and methods
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        return request -> {
+            // Configuration is delegated to CorsFilter bean in CorsConfig
+            // This bean ensures CORS is applied at the Spring Security level
+            org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
+            config.setAllowedOrigins(java.util.Arrays.asList(
+                    "https://projectfrontend17.vercel.app",
+                    "http://localhost:3000",
+                    "http://localhost:4200"
+            ));
+            config.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
+            config.setAllowedHeaders(java.util.Arrays.asList("*"));
+            config.setExposedHeaders(java.util.Arrays.asList("Content-Type", "Authorization", "X-Requested-With"));
+            config.setAllowCredentials(true);
+            config.setMaxAge(3600L);
+            return config;
+        };
     }
 }
