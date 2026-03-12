@@ -7,10 +7,6 @@ import com.safevoice.exception.ResourceNotFoundException;
 import com.safevoice.model.Report;
 import com.safevoice.repository.ReportRepository;
 import org.springframework.stereotype.Service;
-import com.safevoice.service.SeverityAnalyzerService;
-import com.safevoice.service.NotificationService;
-import com.safevoice.service.DepartmentRoutingService;
-import com.safevoice.service.AuditLogService;
 
 import java.time.LocalDateTime;
 import java.util.*;

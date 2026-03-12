@@ -2,7 +2,6 @@ package com.safevoice.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +13,7 @@ import java.util.Date;
 import java.util.function.Function;
 
 @Component
+// JWT Utility for token generation and validation - Spring Boot 4, Java 21, JJWT 0.11.5
 public class JwtUtil {
 
     @Value("${jwt.secret:trinetra_secret_key_very_long_secure_key_for_production_should_be_environment_variable}")
@@ -38,26 +38,13 @@ public class JwtUtil {
     private String createToken(String username) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
-
-        return Jwts.builder()
-                .subject(username)
-                .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
-                .compact();
+        return Jwts.builder().setSubject(username).setIssuedAt(now).setExpiration(expiryDate).signWith(getSigningKey()).compact();
     }
 
     private String createTokenWithRole(String username, String role) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
-
-        return Jwts.builder()
-                .subject(username)
-                .claim("role", role)
-                .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
-                .compact();
+        return Jwts.builder().setSubject(username).claim("role", role).setIssuedAt(now).setExpiration(expiryDate).signWith(getSigningKey()).compact();
     }
 
     public String extractUsername(String token) {
@@ -85,7 +72,7 @@ public class JwtUtil {
                 .getBody();
     }
 
-    public Boolean isTokenValid(String token) {
+    public boolean isTokenValid(String token) {
         try {
             Jwts.parserBuilder()
                     .setSigningKey(getSigningKey())
@@ -97,12 +84,12 @@ public class JwtUtil {
         }
     }
 
-    public Boolean isTokenValid(String token, UserDetails userDetails) {
+    public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
 
-    private Boolean isTokenExpired(String token) {
+    private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 }

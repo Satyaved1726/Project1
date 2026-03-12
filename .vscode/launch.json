@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "java",
+            "name": "Project1Application",
+            "request": "launch",
+            "mainClass": "com.example.demo.Project1Application",
+            "projectName": "demo"
+        },
+        {
             "type": "node-terminal",
             "name": "Run Script: test",
             "request": "launch",
