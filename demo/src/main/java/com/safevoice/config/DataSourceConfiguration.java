@@ -5,7 +5,7 @@ import java.net.URISyntaxException;
 
 import javax.sql.DataSource;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -18,23 +18,21 @@ import com.zaxxer.hikari.HikariDataSource;
  * Handles both DATABASE_URL format (postgresql://user:password@host:port/db)
  * and direct JDBC configuration
  * 
- * For local development without environment variables, Spring Boot's
- * default DataSource autoconfiguration will be used from application.properties
+ * This bean is ONLY created when DATABASE_URL environment variable is set.
+ * For local development, Spring Boot's default DataSource autoconfiguration
+ * will be used from application.properties
  */
 @Configuration
 public class DataSourceConfiguration {
 
     @Bean
     @Primary
-    @ConditionalOnProperty(name = "DATABASE_URL", havingValue = "", matchIfMissing = false)
+    @ConditionalOnExpression("T(java.lang.System).getenv('DATABASE_URL') != null")
     public DataSource dataSource() throws URISyntaxException {
         String databaseUrl = System.getenv("DATABASE_URL");
         String dbUsername = System.getenv("DB_USERNAME");
         String dbPassword = System.getenv("DB_PASSWORD");
         String dbHost = System.getenv("DATABASE_HOST");
-
-        // This bean is only created when DATABASE_URL environment variable is explicitly set
-        // For production/deployment only
 
         HikariConfig config = new HikariConfig();
 
