@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * Production-Grade Security Configuration
@@ -102,6 +103,9 @@ public class SecurityConfig {
                 
                 // Authorization configuration
                 .authorizeHttpRequests(authz -> authz
+                        // Allow preflight OPTIONS requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        
                         // Public endpoints - Authentication endpoints
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
@@ -133,28 +137,47 @@ public class SecurityConfig {
     /**
      * CORS Configuration Source Bean
      * 
-     * Provides CORS configuration for Spring Security
-     * Sources configuration from the CorsFilter bean in CorsConfig
+     * Provides CORS configuration for Spring Security using UrlBasedCorsConfigurationSource
      * 
-     * @return CorsConfigurationSource configured with allowed origins and methods
+     * Configuration:
+     * - Allowed Origins:
+     *   * https://projectfrontend17.vercel.app (Production Frontend)
+     *   * http://localhost:3000 (Local React dev)
+     *   * http://localhost:4200 (Local Angular dev)
+     * - Allowed Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
+     * - Allowed Headers: All (*)
+     * - Credentials: Allowed
+     * - Max Age: 3600 seconds
+     * 
+     * @return UrlBasedCorsConfigurationSource properly configured
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        return request -> {
-            // Configuration is delegated to CorsFilter bean in CorsConfig
-            // This bean ensures CORS is applied at the Spring Security level
-            org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
-            config.setAllowedOrigins(java.util.Arrays.asList(
-                    "https://projectfrontend17.vercel.app",
-                    "http://localhost:3000",
-                    "http://localhost:4200"
-            ));
-            config.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
-            config.setAllowedHeaders(java.util.Arrays.asList("*"));
-            config.setExposedHeaders(java.util.Arrays.asList("Content-Type", "Authorization", "X-Requested-With"));
-            config.setAllowCredentials(true);
-            config.setMaxAge(3600L);
-            return config;
-        };
+        org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
+        
+        // Set allowed origins
+        configuration.setAllowedOrigins(java.util.Arrays.asList(
+                "https://projectfrontend17.vercel.app",
+                "http://localhost:3000",
+                "http://localhost:4200"
+        ));
+        
+        // Set allowed HTTP methods
+        configuration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        
+        // Allow all headers
+        configuration.setAllowedHeaders(java.util.Arrays.asList("*"));
+        
+        // Allow credentials (cookies, Authorization headers)
+        configuration.setAllowCredentials(true);
+        
+        // Set max age for preflight cache
+        configuration.setMaxAge(3600L);
+        
+        // Register configuration for all paths
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        
+        return source;
     }
 }
