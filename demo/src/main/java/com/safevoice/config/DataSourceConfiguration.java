@@ -36,11 +36,13 @@ public class DataSourceConfiguration {
 
         HikariConfig config = new HikariConfig();
 
-        // If DATABASE_URL is provided and looks like postgres URI (not JDBC), parse it
-        if (databaseUrl != null && !databaseUrl.isEmpty() && databaseUrl.startsWith("postgresql://")) {
+        // If DATABASE_URL is provided and looks like a Postgres URI (not JDBC), parse it.
+        // Render/Postgres providers sometimes use "postgres://" instead of "postgresql://".
+        if (databaseUrl != null && !databaseUrl.isEmpty() &&
+            (databaseUrl.startsWith("postgresql://") || databaseUrl.startsWith("postgres://"))) {
             parsePostgresUrl(config, databaseUrl, dbUsername, dbPassword);
-        } 
-        // If DATABASE_URL looks like JDBC URL, use it directly
+        }
+        // If DATABASE_URL looks like a JDBC URL, use it directly.
         else if (databaseUrl != null && !databaseUrl.isEmpty() && databaseUrl.startsWith("jdbc:")) {
             config.setJdbcUrl(databaseUrl);
             if (dbUsername != null) config.setUsername(dbUsername);
